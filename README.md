@@ -18,7 +18,13 @@ Tools for generating synthetic 6DoF pose estimation training images. Now it only
 
 ## Example
 
-![](assets/example.png)
+Gaussian blur
+
+![](assets/gaussian.png)
+
+Motion blur
+
+![](assets/motion.png)
 
 ## TODO
 
@@ -26,10 +32,12 @@ Tools for generating synthetic 6DoF pose estimation training images. Now it only
     - [x] ~~Load SIXD information~~
     - [ ] Generate keypoints
     - [x] ~~Stick image~~
-    - [ ] Data augmentation
-        - [ ] Scale
-        - [ ] Blur
-    - [ ]
+    - [x] Save annotation
+    - [x] ~~Data augmentation~~
+        - [x] ~~Scale~~
+        - [x] ~~Motion blur~~
+        - [x] ~~Gaussian blur~~
+        - [x] ~~Box blur~~
 - [ ] Advanced
     - [ ] Lighting
     - [ ] Texture
