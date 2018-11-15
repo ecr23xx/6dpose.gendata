@@ -76,16 +76,14 @@ class SixdBenchmark:
                 self.models[name] = np.stack((np.array(data['vertex']['x']),
                                               np.array(data['vertex']['y']),
                                               np.array(data['vertex']['z'])), axis=1)
-                self.models[name] *= unit
 
                 kp_path = os.path.join(self.root, 'kps/obj_%s.ply' % name)
                 data = PlyData.read(kp_path)
                 self.kps[name] = np.stack((np.array(data['vertex']['x']),
                                            np.array(data['vertex']['y']),
                                            np.array(data['vertex']['z'])), axis=1)
-                self.kps[name] *= unit
 
-        # Load annotations, include bbox and pose
+        # Load annotations
         print("[LOG] Load annotations")
         for seq in tqdm(['%02d' % i for i in range(1, self.seq_num+1)], ascii=True):
             frames = list()
@@ -107,6 +105,7 @@ class SixdBenchmark:
                         bbox[3] += bbox[1]
                         annot['bbox'] = bbox
                         annot['obj_id'] = v['obj_id']
+                        annot['kps'] = self._project_kps(self.kps[seq], annot['pose'])
                         frame['annots'].append(annot)
                     frames.append(frame)
             self.frames[seq] = frames
@@ -118,6 +117,22 @@ class SixdBenchmark:
         except Exception as e:
             print("[ERROR]", str(e))
             print("[ERROR] Save to disk failed")
+
+    def _project_kps(self, kps, pose):
+        """Project 3d vertices to 2d
+
+        Args
+        - kps: (np.array) [N x 3] 3d keypoints vertices.
+        - pose: (np.array) [4 x 4] pose matrix
+
+        Returns
+        - projected: (np.array) [N x 2] projected 2d points
+        """
+        kps = np.concatenate((kps, np.ones((kps.shape[0], 1))), axis=1)
+        projected = np.matmul(np.matmul(self.cam, pose), kps.T)
+        projected /= projected[2, :]
+        projected = projected[:2, :].T
+        return projected
 
     def _load_from_disk(self):
         assert os.path.exists(self.pklpath) == True, ".pkl file doesn't exist"

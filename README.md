@@ -29,14 +29,14 @@ Motion blur
 
 ## TODO
 
-- [ ] Basic
+- [x] ~~Basic~~
     - [x] ~~Load SIXD information~~
     - [x] ~~Generate keypoints~~
     - [x] ~~Stick image~~
-    - [ ] Save annotation
+    - [x] ~~Save annotation~~
         - [x] ~~Bounding box~~
         - [x] ~~Pose~~
-        - [ ] Keypoints
+        - [x] ~~Keypoints~~
     - [x] ~~Data augmentation~~
         - [x] ~~Scale~~
         - [x] ~~Motion blur~~

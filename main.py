@@ -7,6 +7,7 @@ opj = os.path.join
 
 from sixd import SixdBenchmark
 from transform import *
+from utils import *
 
 
 def parse_arg():
@@ -46,21 +47,23 @@ def get_frames(bench, num=(10, 15), hards=[3, 7]):
     return frames
 
 
-def stick(frames, bgpath, savepath, size=(640, 480)):
+def stick(frames, bgpath, cam, size=(640, 480)):
     """
     Stick frames in a random location in background images
 
     Args
     - frames: (list) Returned by `get_frames`
     - bgpath: (str) Path to background image
-    - savepath: (str) Image saving path
     - size: (tuple) Synthetic images' width and height
+    - cam: (np.array) [3 x 3]
 
     Returns
     - syn: (np.array) [H x W x C] image array
     - annot: (dict) Keys and values are
         - bboxes: (np.array) [N x 4] bbox annotation 
         - poses: (np.array) [N x 3 x 4] pose annotation
+        - kps: (np.array) [N x K x 2] keypoints annotation,
+                K for number of keypoints
         - obj_ids: (np.array) [N] object ids, range from [1,15]
     """
     bg = Image.open(bgpath).resize(size)
@@ -73,11 +76,13 @@ def stick(frames, bgpath, savepath, size=(640, 480)):
     bboxes = []
     poses = []
     obj_ids = []
+    kps = []
     for idx, f in enumerate(frames):
         x1, y1 = x1s[idx], y1s[idx]
-        frame, bbox = random_scale(Image.open(f['path']), f['annots'][0]['bbox'], 0.6, 0.8)
+        frame, annot, sf = random_scale(Image.open(f['path']), f['annots'][0], 0.5, 1)
         frame = frame.filter(ImageFilter.EDGE_ENHANCE)
         frame = np.array(frame)
+        bbox = annot['bbox']
 
         w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
         x2, y2 = x1 + w, y1 + h
@@ -90,13 +95,23 @@ def stick(frames, bgpath, savepath, size=(640, 480)):
         syn[y1:y2, x1:x2, :] = foreground
 
         bboxes.append([x1, y1, x2, y2])
-        poses.append(f['annots'][0]['pose'])
-        obj_ids.append(f['annots'][0]['obj_id'])
+        kp = annot['kps']
+        kp[:, 0] = kp[:, 0] - bbox[0] + x1
+        kp[:, 1] = kp[:, 1] - bbox[1] + y1
+        kps.append(kp)
+        pose = annot['pose']
+        trans = np.array([[sf, 0, x1 - bbox[0]],
+                          [0, sf, y1 - bbox[1]],
+                          [0, 0, 1]])
+        pose = np.linalg.inv(cam).dot(trans).dot(cam).dot(pose)
+        poses.append(pose)
+        obj_ids.append(annot['obj_id'])
 
     bg.close()
 
     annot = {
         'bboxes': np.array(bboxes),
+        'kps': np.array(kps),
         'poses': np.array(poses),
         'obj_ids': np.array(obj_ids)
     }
@@ -120,7 +135,7 @@ def save(save_root, idx, img_array, annot):
     np.save(opj(save_root, 'annot', '%05d.npy' % idx), annot)
     img.close()
 
-    
+
 if __name__ == '__main__':
     args = parse_arg()
     bench = SixdBenchmark(dataset=args.dataset, unit=1e-3, is_train=True)

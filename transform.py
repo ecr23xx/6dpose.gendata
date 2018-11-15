@@ -2,25 +2,31 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 
-def random_scale(frame, bbox, min, max):
+def random_scale(frame, annot, min, max):
     """
     Randomly scale frame
 
     Args
     - frame: (Pillow.Image)
-    - bbox: (np.array) [4]
+    - annot: (dict) Keys and values are
+        - bbox: (np.array) [4] bbox annotation 
+        - pose: (np.array) [3 x 4] pose annotation
+        - kps: (np.array) [K x 2] keypoints annotation,
+               K for number of keypoints
+        - obj_ids: (np.array) [N] object ids, range from [1,15]
     - min: (float) Minimum scaling factor
     - max: (float) Maximum scaling factor
 
     Returns
-    - scaled_frame:
-    - scaled_bbox:
+    - scaled_frame: (Pillow.Image) Scaled image
+    - annot: (dict) Scaled annotation
     """
     w, h = frame.size
     sf = (max - min) * np.random.random() + min
     scaled_frame = frame.resize((int(w * sf), int(h * sf)), Image.BICUBIC)
-    scaled_bbox = bbox.astype(float) * sf
-    return scaled_frame, scaled_bbox.astype(int)
+    annot['bbox'] = (annot['bbox'] * sf).astype(int)
+    annot['kps'] *= sf
+    return scaled_frame, annot, sf
 
 
 def random_blur(img, prob):

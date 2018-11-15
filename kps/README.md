@@ -23,7 +23,6 @@
 
 ![kps.png](../assets/kps.png)
 
-
 ## Parameters
 
 Good keypoints should be distributed uniformly around the object mesh surface.
@@ -32,9 +31,11 @@ Good keypoints should be distributed uniformly around the object mesh surface.
 | --- | --- | --- | --- | --- | --- |
 | 01 ape | 0.3 | 10 | 8 | 0.158 | 30 |
 | 02 benchvise | 0.2 | 10 | 8 | 0.671 | 30 |
+| 03 bowl | 0.2 | 10 | 8 | 0.306 | 30 |
 | 04 camera | 0.2 | 10 | 8 | 0.247 | 30 |
 | 05 can | 0.2 | 10 | 8 | 0.512 | 30 |
 | 06 cat | 0.2 | 10 | 8 | 0.32 | 30 |
+| 07 cup | 0.2 | 10 | 8 | 0.2444 | 30 |
 | 08 driller | 0.2 | 10 | 8 | 0.425 | 30 |
 | 09 duck | 0.2 | 10 | 8 | 0.19 | 30 |
 | 10 eggbox | 0.2 | 10 | 8 | 0.27 | 30 |
@@ -42,4 +43,4 @@ Good keypoints should be distributed uniformly around the object mesh surface.
 | 12 holepuncher | 0.2 | 10 | 8 | 0.489 | 30 |
 | 13 iron | 0.2 | 10 | 8 | 0.575 | 30 |
 | 14 lamp | 0.2 | 10 | 8 | 0.575 | 30 |
-| 15 lamp | 0.2 | 10 | 8 | 0.3175 | 30 |
+| 15 phone | 0.2 | 10 | 8 | 0.3175 | 30 |
