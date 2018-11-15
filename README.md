@@ -8,10 +8,11 @@ Tools for generating synthetic 6DoF pose estimation training images. Now it only
 
 ## Workflow
 
-1. Load rendered images from `$SIXDROOT/train/rgb`
-2. Load background images from `$COCOROOT`
-3. Stick rendered images into background with some data augumentation
-4. Save annotation
+1. Generate keypoints followed the instruction in [kps/README.md](kps/README.md)
+2. Load rendered images from `$SIXDROOT/train/rgb`
+3. Load background images from `$COCOROOT`
+4. Stick rendered images into background with some data augumentation
+5. Save annotation
     - bounding box
     - keypoints position
     - pose
@@ -30,9 +31,12 @@ Motion blur
 
 - [ ] Basic
     - [x] ~~Load SIXD information~~
-    - [ ] Generate keypoints
+    - [x] ~~Generate keypoints~~
     - [x] ~~Stick image~~
-    - [x] Save annotation
+    - [ ] Save annotation
+        - [x] ~~Bounding box~~
+        - [x] ~~Pose~~
+        - [ ] Keypoints
     - [x] ~~Data augmentation~~
         - [x] ~~Scale~~
         - [x] ~~Motion blur~~

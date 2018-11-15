@@ -120,7 +120,7 @@ def save(save_root, idx, img_array, annot):
     np.save(opj(save_root, 'annot', '%05d.npy' % idx), annot)
     img.close()
 
-
+    
 if __name__ == '__main__':
     args = parse_arg()
     bench = SixdBenchmark(dataset=args.dataset, unit=1e-3, is_train=True)
