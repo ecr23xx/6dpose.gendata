@@ -1,6 +1,6 @@
 # 6dpose.gendata
 
-Tools for generating synthetic 6DoF pose estimation training images. Now it only supports SIXD's hinterstoisser dataset. In the future, it will support SIXD's other datasets, and YCB video datasets.
+Tools for generating synthetic 6DoF pose estimation training images. Now it only supports SIXD's hinterstoisser dataset. In the future, it will support SIXD's other datasets.
 
 ## Download
 
@@ -29,7 +29,7 @@ Motion blur
 
 ## TODO
 
-- [x] ~~Basic~~
+- [x] Basic
     - [x] ~~Load SIXD information~~
     - [x] ~~Generate keypoints~~
     - [x] ~~Stick image~~

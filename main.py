@@ -15,7 +15,7 @@ def parse_arg():
     parser.add_argument('--dataset', default='hinterstoisser', type=str, help="dataset name")
     parser.add_argument('--bgroot', default='/home/penggao/data/coco/2017/train2017',
                         type=str, help="Path to background images")
-    parser.add_argument('--saveroot', default='/home/penggao/data/synthetic/sixd',
+    parser.add_argument('--saveroot', default='/home/penggao/data/synthetic/hinterstoisser',
                         type=str, help="Path to save images and annotation")
     parser.add_argument('--num', default=10000, type=int, help="Number of synthetic images")
     parser.add_argument('--size', default=(640, 480), type=tuple,
@@ -38,7 +38,7 @@ def get_frames(bench, num=(10, 15), hards=[3, 7]):
     """
     frames = list()
     selected_num = np.random.randint(num[0], num[1])
-    selected_seqs = list(np.random.randint(1, len(bench.frames)+1, selected_num))
+    selected_seqs = list(np.random.choice(range(1, len(bench.frames)+1), selected_num, replace=False))
     for seq in selected_seqs:
         if seq in hards:  # skip hard objects
             continue
@@ -79,7 +79,7 @@ def stick(frames, bgpath, cam, size=(640, 480)):
     kps = []
     for idx, f in enumerate(frames):
         x1, y1 = x1s[idx], y1s[idx]
-        frame, annot, sf = random_scale(Image.open(f['path']), f['annots'][0], 0.5, 1)
+        frame, annot, sf = random_scale(Image.open(f['path']), f['annots'][0], 0.3, 0.8)
         frame = frame.filter(ImageFilter.EDGE_ENHANCE)
         frame = np.array(frame)
         bbox = annot['bbox']
@@ -143,11 +143,13 @@ if __name__ == '__main__':
     np.random.shuffle(bgpaths)  # shuffle background images
 
     print("[LOG] Sticking images")
+    os.makedirs(opj(args.saveroot, 'images'), exist_ok=True)
+    os.makedirs(opj(args.saveroot, 'annot'), exist_ok=True)
     tbar = tqdm(bgpaths, ascii=True)
     for idx, bg in enumerate(tbar):
         frames = get_frames(bench)
         try:
-            syn, annot = stick(frames, bg, args.size)
+            syn, annot = stick(frames, bg, bench.cam, args.size)
         except Exception as e:
             print("\n[ERROR]", str(e))
         save(args.saveroot, idx, syn, annot)
