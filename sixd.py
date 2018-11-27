@@ -28,13 +28,15 @@ class SixdBenchmark:
           Each item is a list of image frames, with file paths and annotations
     """
 
-    def __init__(self, dataset, unit, is_train, resume=True):
+    def __init__(self, dataset, num_kp, unit, is_train, resume=True):
         # Prepare
         self.root = opj('/home/penggao/data/sixd', dataset)
+        self.num_kp = num_kp
         self.unit = unit
         self.is_train = is_train
 
-        self.pklpath = opj(self.root, 'libs/benchmark.%s.pkl' % ('train' if is_train else 'test'))
+        self.pklpath = opj(self.root, 'libs/benchmark.%s.pkl' %
+                           ('train' if is_train else 'test'))
         self.seq_num = 15  # FIXME: constant
 
         self.cam = np.zeros((3, 3))
@@ -77,7 +79,8 @@ class SixdBenchmark:
                                               np.array(data['vertex']['y']),
                                               np.array(data['vertex']['z'])), axis=1)
 
-                kp_path = os.path.join(self.root, 'kps/obj_%s.ply' % name)
+                kp_path = os.path.join(
+                    self.root, 'kps/%d/obj_%s.ply' % (self.num_kp, name))
                 data = PlyData.read(kp_path)
                 self.kps[name] = np.stack((np.array(data['vertex']['x']),
                                            np.array(data['vertex']['y']),
@@ -87,7 +90,8 @@ class SixdBenchmark:
         print("[LOG] Load annotations")
         for seq in tqdm(['%02d' % i for i in range(1, self.seq_num+1)], ascii=True):
             frames = list()
-            seq_root = opj(self.root, 'train' if self.is_train else 'test', str(seq))
+            seq_root = opj(
+                self.root, 'train' if self.is_train else 'test', str(seq))
             imgdir = opj(seq_root, 'rgb')
             with open(opj(seq_root, 'gt.yml')) as f:
                 content = yaml.load(f)
@@ -100,12 +104,14 @@ class SixdBenchmark:
                         rot = np.array(v['cam_R_m2c']).reshape(3, 3)
                         tran = np.array(v['cam_t_m2c']).reshape(3, 1)
                         annot['pose'] = np.concatenate((rot, tran), axis=1)
-                        bbox = np.array(v['obj_bb'])  # x1 y1 w h => x1 y1 x2 y2
+                        # x1 y1 w h => x1 y1 x2 y2
+                        bbox = np.array(v['obj_bb'])
                         bbox[2] += bbox[0]
                         bbox[3] += bbox[1]
                         annot['bbox'] = bbox
                         annot['obj_id'] = v['obj_id']
-                        annot['kps'] = self._project_kps(self.kps[seq], annot['pose'])
+                        annot['kps'] = self._project_kps(
+                            self.kps[seq], annot['pose'])
                         frame['annots'].append(annot)
                     frames.append(frame)
             self.frames[seq] = frames
@@ -139,9 +145,10 @@ class SixdBenchmark:
         assert os.path.getsize(self.pklpath) > 0, ".pkl file corrupted"
         with open(self.pklpath, 'rb') as handle:
             benchmark = pickle.load(handle)
-        assert benchmark['root'] == self.root, "wrong dataset root"
-        assert benchmark['unit'] == self.unit, "wrong unit"
-        assert benchmark['pklpath'] == self.pklpath, "wrong .pkl path"
+        assert benchmark['root'] == self.root, "Wrong dataset root"
+        assert benchmark['num_kp'] == self.num_kp, "Wrong number of keypoints"
+        assert benchmark['unit'] == self.unit, "Wrong unit"
+        assert benchmark['pklpath'] == self.pklpath, "Wrong .pkl path"
         self.__dict__ = benchmark
 
     def _save_to_disk(self):

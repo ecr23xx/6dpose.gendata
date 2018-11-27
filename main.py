@@ -1,25 +1,27 @@
-from utils import *
-from transform import *
 from sixd import SixdBenchmark
+from transform import *
+from utils import *
 import os
 import argparse
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
+from collections import defaultdict
 opj = os.path.join
 
 
 def parse_arg():
-    parser = argparse.ArgumentParser(
-        description='SIXD synthetic data generator')
+    parser = argparse.ArgumentParser(description='Synthetic data generator')
     parser.add_argument('--dataset', default='hinterstoisser',
                         type=str, help="dataset name")
     parser.add_argument('--bgroot', default='/home/penggao/data/coco/2017/train2017',
                         type=str, help="Path to background images")
     parser.add_argument('--saveroot', default='/home/penggao/data/synthetic/hinterstoisser',
                         type=str, help="Path to save images and annotation")
-    parser.add_argument('--num', default=10000, type=int,
+    parser.add_argument('--num', default=50000, type=int,
                         help="Number of synthetic images")
+    parser.add_argument('--kp', default=17, type=int,
+                        help="Number of keypoints")
     return parser.parse_args()
 
 
@@ -138,17 +140,24 @@ def save(save_root, idx, img_array, annot):
 
 if __name__ == '__main__':
     args = parse_arg()
-    bench = SixdBenchmark(dataset=args.dataset, unit=1e-3, is_train=True)
+    print("[LOG] Number of keypoint: %d" % args.kp)
+    print("[LOG] Number of images to generate: %d" % args.num)
+
+    bench = SixdBenchmark(dataset=args.dataset, num_kp=args.kp,
+                          unit=1e-3, is_train=True)
     bgpaths = [opj(args.bgroot, bgname)
                for bgname in os.listdir(args.bgroot)[:args.num]]
     np.random.shuffle(bgpaths)
 
-    os.makedirs(opj(args.saveroot, 'images'), exist_ok=True)
-    os.makedirs(opj(args.saveroot, 'annots'), exist_ok=True)
-    if len(os.listdir(opj(args.saveroot, 'images'))) != 0:
+    count = defaultdict(int)
+    os.makedirs(opj(args.saveroot, str(args.kp), 'images'), exist_ok=True)
+    os.makedirs(opj(args.saveroot, str(args.kp), 'annots'), exist_ok=True)
+    if len(os.listdir(opj(args.saveroot, str(args.kp), 'images'))) != 0:
         print("[WARNING] Clear exsiting images and annotations")
-        os.system('rm %s/*' % opj(args.saveroot, 'images'))
-        os.system('rm %s/*' % opj(args.saveroot, 'annots'))
+        os.system('find %s/ -name "*.png" -delete' %
+                  opj(args.saveroot, str(args.kp), 'images'))
+        os.system('find %s/ -name "*.npy" -delete' %
+                  opj(args.saveroot, str(args.kp), 'annots'))
 
     print("[LOG] Sticking images")
     tbar = tqdm(bgpaths, ascii=True)
@@ -156,6 +165,12 @@ if __name__ == '__main__':
         frames = get_frames(bench)
         try:
             syn, annot = stick(frames, bg, bench.cam)
-            save(args.saveroot, idx, syn, annot)
+            save(opj(args.saveroot, str(args.kp)), idx, syn, annot)
+            for obj_id in annot['obj_ids']:
+                count[obj_id] += 1
         except Exception as e:
             print("\n[ERROR] %s in No.%d" % (str(e), idx))
+
+    print("[LOG] Number of synthetic images for different objects")
+    for k, v in count.items():
+        print("Sequence '%02d': %d" % (k, v))
