@@ -1,3 +1,6 @@
+from utils import *
+from transform import *
+from sixd import SixdBenchmark
 import os
 import argparse
 import numpy as np
@@ -5,43 +8,38 @@ from tqdm import tqdm
 from PIL import Image
 opj = os.path.join
 
-from sixd import SixdBenchmark
-from transform import *
-from utils import *
-
 
 def parse_arg():
-    parser = argparse.ArgumentParser(description='SIXD synthetic data generator')
-    parser.add_argument('--dataset', default='hinterstoisser', type=str, help="dataset name")
+    parser = argparse.ArgumentParser(
+        description='SIXD synthetic data generator')
+    parser.add_argument('--dataset', default='hinterstoisser',
+                        type=str, help="dataset name")
     parser.add_argument('--bgroot', default='/home/penggao/data/coco/2017/train2017',
                         type=str, help="Path to background images")
     parser.add_argument('--saveroot', default='/home/penggao/data/synthetic/hinterstoisser',
                         type=str, help="Path to save images and annotation")
-    parser.add_argument('--num', default=10000, type=int, help="Number of synthetic images")
-    parser.add_argument('--size', default=(640, 480), type=tuple,
-                        help="Width and height of synthetic images")
+    parser.add_argument('--num', default=10000, type=int,
+                        help="Number of synthetic images")
     return parser.parse_args()
 
 
-def get_frames(bench, num=(10, 15), hards=[3, 7]):
+def get_frames(bench, num=(8, 15)):
     """
     Randomly choose frames to render.
 
     Args
     - bench: (SixdBenchmark)
     - num: (tuple) Number range of selected frames
-    - hards: (list) Hard objects to skip
 
     Returns
     - frames: (list) selected frames
         Each item contains path to images and annotation
     """
     frames = list()
-    selected_num = np.random.randint(num[0], num[1])
-    selected_seqs = list(np.random.choice(range(1, len(bench.frames)+1), selected_num, replace=False))
+    num_frames = np.random.randint(num[0], num[1])
+    num_seqs = len(bench.frames)
+    selected_seqs = np.random.choice(range(1, num_seqs+1), num_frames, False)
     for seq in selected_seqs:
-        if seq in hards:  # skip hard objects
-            continue
         idx = np.random.randint(0, len(bench.frames['%02d' % seq]))
         frames.append(bench.frames['%02d' % seq][idx])
     return frames
@@ -60,7 +58,7 @@ def stick(frames, bgpath, cam, size=(640, 480)):
     Returns
     - syn: (np.array) [H x W x C] image array
     - annot: (dict) Keys and values are
-        - bboxes: (np.array) [N x 4] bbox annotation 
+        - bboxes: (np.array) [N x 4] bbox annotation
         - poses: (np.array) [N x 3 x 4] pose annotation
         - kps: (np.array) [N x K x 2] keypoints annotation,
                 K for number of keypoints
@@ -79,7 +77,9 @@ def stick(frames, bgpath, cam, size=(640, 480)):
     kps = []
     for idx, f in enumerate(frames):
         x1, y1 = x1s[idx], y1s[idx]
-        frame, annot, sf = random_scale(Image.open(f['path']), f['annots'][0], 0.3, 0.8)
+        assert len(f['annots']) == 1, "Annotations error!"
+        frame, annot, sf = random_scale(Image.open(f['path']), f['annots'][0],
+                                        min_sf=0.3, max_sf=0.7)
         frame = frame.filter(ImageFilter.EDGE_ENHANCE)
         frame = np.array(frame)
         bbox = annot['bbox']
@@ -132,24 +132,30 @@ def save(save_root, idx, img_array, annot):
     img = Image.fromarray(img_array)
     img = random_blur(img, 0.4)
     img.save(opj(save_root, 'images', '%05d.png' % idx))
-    np.save(opj(save_root, 'annot', '%05d.npy' % idx), annot)
+    np.save(opj(save_root, 'annots', '%05d.npy' % idx), annot)
     img.close()
 
 
 if __name__ == '__main__':
     args = parse_arg()
     bench = SixdBenchmark(dataset=args.dataset, unit=1e-3, is_train=True)
-    bgpaths = [opj(args.bgroot, bgname) for bgname in os.listdir(args.bgroot)[:args.num]]
-    np.random.shuffle(bgpaths)  # shuffle background images
+    bgpaths = [opj(args.bgroot, bgname)
+               for bgname in os.listdir(args.bgroot)[:args.num]]
+    np.random.shuffle(bgpaths)
+
+    os.makedirs(opj(args.saveroot, 'images'), exist_ok=True)
+    os.makedirs(opj(args.saveroot, 'annots'), exist_ok=True)
+    if len(os.listdir(opj(args.saveroot, 'images'))) != 0:
+        print("[WARNING] Clear exsiting images and annotations")
+        os.system('rm %s/*' % opj(args.saveroot, 'images'))
+        os.system('rm %s/*' % opj(args.saveroot, 'annots'))
 
     print("[LOG] Sticking images")
-    os.makedirs(opj(args.saveroot, 'images'), exist_ok=True)
-    os.makedirs(opj(args.saveroot, 'annot'), exist_ok=True)
     tbar = tqdm(bgpaths, ascii=True)
     for idx, bg in enumerate(tbar):
         frames = get_frames(bench)
         try:
-            syn, annot = stick(frames, bg, bench.cam, args.size)
+            syn, annot = stick(frames, bg, bench.cam)
+            save(args.saveroot, idx, syn, annot)
         except Exception as e:
-            print("\n[ERROR]", str(e))
-        save(args.saveroot, idx, syn, annot)
+            print("\n[ERROR] %s in No.%d" % (str(e), idx))

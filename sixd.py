@@ -22,10 +22,10 @@ class SixdBenchmark:
     - pklpath: (str) Path to .pkl file
     - cam: (np.array) [3 x 3] camera matrix
     - models: (dict) Named with sequence number (e.g. '01').
-        Each item is a [N x 3] np.array for corresponding model vertices
+          Each item is a [N x 3] np.array for corresponding model vertices
     - kps: (dict) Same format as 'models', represents corresponding keypoints
     - frames: (dict) Named with sequence number (e.g. '01')
-        Each item is a list of image frames, with file paths and annotations
+          Each item is a list of image frames, with file paths and annotations
     """
 
     def __init__(self, dataset, unit, is_train, resume=True):

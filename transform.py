@@ -2,31 +2,34 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 
-def random_scale(frame, annot, min, max):
+def random_scale(frame, annot, min_sf, max_sf):
     """
     Randomly scale frame
 
     Args
     - frame: (Pillow.Image)
     - annot: (dict) Keys and values are
-        - bbox: (np.array) [4] bbox annotation 
+        - bbox: (np.array) [4] bbox annotation
         - pose: (np.array) [3 x 4] pose annotation
         - kps: (np.array) [K x 2] keypoints annotation,
                K for number of keypoints
-        - obj_ids: (np.array) [N] object ids, range from [1,15]
-    - min: (float) Minimum scaling factor
+        - obj_id: (np.array) [N] object ids, range from [1,15]
+    - min_sf: (float) Minimum scaling factor
     - max: (float) Maximum scaling factor
 
     Returns
     - scaled_frame: (Pillow.Image) Scaled image
-    - annot: (dict) Scaled annotation
+    - scaled_annot: (dict) Scaled annotation
     """
     w, h = frame.size
-    sf = (max - min) * np.random.random() + min
+    sf = (max_sf - min_sf) * np.random.random() + min_sf
     scaled_frame = frame.resize((int(w * sf), int(h * sf)), Image.BICUBIC)
-    annot['bbox'] = (annot['bbox'] * sf).astype(int)
-    annot['kps'] *= sf
-    return scaled_frame, annot, sf
+    scaled_annot = dict()
+    scaled_annot['bbox'] = (annot['bbox'] * sf).astype(int)
+    scaled_annot['kps'] = annot['kps'] * sf
+    scaled_annot['pose'] = annot['pose']
+    scaled_annot['obj_id'] = annot['obj_id']
+    return scaled_frame, scaled_annot, sf
 
 
 def random_blur(img, prob):
