@@ -9,15 +9,14 @@ def split(root='/home/penggao/data/synthetic/hinterstoisser'):
     Split the datasets for different sequences
     """
     train_lists = defaultdict(list)
-    tbar = tqdm(sorted(os.listdir(os.path.join(root, 'annot'))), ascii=True)
-    for idx, name in enumerate(tbar):
-        assert '%05d' % idx == name.split('.')[0]
-        annot = np.load(os.path.join(root, 'annot', name)).item()
+    tbar = tqdm(sorted(os.listdir(os.path.join(root, 'annots'))), ascii=True)
+    for name in tbar:
+        annot = np.load(os.path.join(root, 'annots', name)).item()
         flag = defaultdict(bool)
         for obj_id in annot['obj_ids']:
             if flag['%02d' % obj_id] == True:
-                continue  # skip duplicate entry
-            train_lists['%02d' % obj_id].append('%05d' % idx)
+                continue
+            train_lists['%02d' % obj_id].append(name.split('.')[0])
             flag['%02d' % obj_id] = True
     for key, lines in train_lists.items():
         with open(os.path.join(root, 'lists', '%s.txt' % key), 'w') as f:
