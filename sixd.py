@@ -1,7 +1,8 @@
-#####################################
-# Sixd benchmark loading utilities  #
-# Author: Gao PENG                  #
-# ################################# #
+# ------------------------------------------------------------------------------
+# Copyright (c) 2018 Gao Peng
+# Licensed under the MIT License.
+# Written by: Gao PENG (ecr23pg@gmail.com)
+# ------------------------------------------------------------------------------
 
 import os
 import yaml

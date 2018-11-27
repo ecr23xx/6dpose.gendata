@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# Copyright (c) 2018 Gao Peng
+# Licensed under the MIT License.
+# Written by: Gao PENG (ecr23pg@gmail.com)
+# ------------------------------------------------------------------------------
+
 import numpy as np
 from PIL import Image, ImageFilter
 

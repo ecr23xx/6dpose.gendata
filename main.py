@@ -1,3 +1,9 @@
+# ------------------------------------------------------------------------------
+# Copyright (c) 2018 Gao Peng
+# Licensed under the MIT License.
+# Written by: Gao PENG (ecr23pg@gmail.com)
+# ------------------------------------------------------------------------------
+
 from sixd import SixdBenchmark
 from transform import *
 from utils import *
