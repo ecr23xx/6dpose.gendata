@@ -7,8 +7,7 @@ from collections import defaultdict
 
 def parse_arg():
     parser = argparse.ArgumentParser(description='Synthetic data spliter')
-    parser.add_argument('--kp', default=17, type=int,
-                        help="Number of keypoints")
+    parser.add_argument('--kp', type=int, help="Number of keypoints")
     return parser.parse_args()
 
 
@@ -27,15 +26,18 @@ def split(root):
 
     if os.path.exists(os.path.join(root, 'lists')):
         print("[WARNING] Overwriting existing spliting file")
+        os.system('rm %s/*' % os.path.join(root, 'lists'))
     else:
         os.makedirs(os.path.join(root, 'lists'))
 
     for key, lines in train_lists.items():
         with open(os.path.join(root, 'lists', '%s.txt' % key), 'w') as f:
             f.writelines("%s\n" % l for l in lines)
-
+        with open(os.path.join(root, 'lists', 'split.txt'), 'a') as f:
+            f.write('%s: %d\n' % (key, len(lines)))
 
 if __name__ == '__main__':
     args = parse_arg()
     print("[LOG] Spliting datasets of %d keypoints" % args.kp)
     split(os.path.join('/home/penggao/data/synthetic/hinterstoisser', str(args.kp)))
+    print("[LOG] Done!")

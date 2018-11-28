@@ -5,6 +5,7 @@
 # ------------------------------------------------------------------------------
 
 import os
+import cv2
 import yaml
 import pickle
 import numpy as np
@@ -14,8 +15,8 @@ from plyfile import PlyData
 opj = os.path.join
 
 
-class SixdBenchmark:
-    """Sixd dataset
+class SixdToolkit:
+    """Sixd toolkit, load datasets and some normal operations
 
     Attrs
     - root: (str) Path to root. e.g. '/home/penggao/data/sixd/hinterstoisser'
@@ -111,7 +112,7 @@ class SixdBenchmark:
                         bbox[3] += bbox[1]
                         annot['bbox'] = bbox
                         annot['obj_id'] = v['obj_id']
-                        annot['kps'] = self._project_kps(
+                        annot['kps'] = self.project_vertices(
                             self.kps[seq], annot['pose'])
                         frame['annots'].append(annot)
                     frames.append(frame)
@@ -125,31 +126,90 @@ class SixdBenchmark:
             print("[ERROR]", str(e))
             print("[ERROR] Save to disk failed")
 
-    def _project_kps(self, kps, pose):
+    def project_vertices(self, vertices, pose):
         """Project 3d vertices to 2d
 
         Args
-        - kps: (np.array) [N x 3] 3d keypoints vertices.
-        - pose: (np.array) [4 x 4] pose matrix
+        - vertices: (np.array) [N x 3] 3d keypoints vertices.
+        - pose: (np.array) [3 x 4] pose matrix
 
         Returns
         - projected: (np.array) [N x 2] projected 2d points
         """
-        kps = np.concatenate((kps, np.ones((kps.shape[0], 1))), axis=1)
-        projected = np.matmul(np.matmul(self.cam, pose), kps.T)
+        vertices = np.concatenate(
+            (vertices, np.ones((vertices.shape[0], 1))), axis=1)
+        projected = np.matmul(np.matmul(cam, pose), vertices.T)
         projected /= projected[2, :]
         projected = projected[:2, :].T
         return projected
+
+    def get_3d_corners(self, vertices):
+        """Get vertices 3d bounding boxes
+
+        Args
+        - vertices: (np.array) [N x 3] 3d vertices
+
+        Returns
+        - corners: (np.array) [8 x 2] 2d vertices
+        """
+        min_x = np.min(vertices[:, 0])
+        max_x = np.max(vertices[:, 0])
+        min_y = np.min(vertices[:, 1])
+        max_y = np.max(vertices[:, 1])
+        min_z = np.min(vertices[:, 2])
+        max_z = np.max(vertices[:, 2])
+
+        corners = np.array([[min_x, min_y, min_z],
+                            [min_x, min_y, max_z],
+                            [min_x, max_y, min_z],
+                            [min_x, max_y, max_z],
+                            [max_x, min_y, min_z],
+                            [max_x, min_y, max_z],
+                            [max_x, max_y, min_z],
+                            [max_x, max_y, max_z]])
+
+        return corners
+
+    def solve_pnp(self, model_points, image_points):
+        """
+        Wrapper for OpenCV solvePnP
+
+        Args
+        - model_points: (np.array) [N x 3] 3d points on model
+        - image_points: (np.array) [N x 2] Corresponding 2d points
+
+        Returns
+        - pose: (np.array) [3 x 4] Pose matrix
+
+        Docs
+        - cv2.solvePnP: https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#solvepnp
+        - cv2.Rodrigues: http://docs.opencv.org/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html#void%20Rodrigues(InputArray%20src,%20OutputArray%20dst,%20OutputArray%20jacobian)
+        """
+        success, rvec, T = cv2.solvePnP(
+            model_points,
+            image_points,
+            self.cam,
+            np.zeros((4,1)), # Assuming no lens distortion
+            flags=cv2.SOLVEPNP_ITERATIVE
+        )
+        R = np.eye(3)
+        cv2.Rodrigues(rvec, R)
+        pose = np.concatenate((R, T), axis=1)
+        return pose
 
     def _load_from_disk(self):
         assert os.path.exists(self.pklpath) == True, ".pkl file doesn't exist"
         assert os.path.getsize(self.pklpath) > 0, ".pkl file corrupted"
         with open(self.pklpath, 'rb') as handle:
             benchmark = pickle.load(handle)
-        assert benchmark['root'] == self.root, "Wrong dataset root"
-        assert benchmark['num_kp'] == self.num_kp, "Wrong number of keypoints"
-        assert benchmark['unit'] == self.unit, "Wrong unit"
-        assert benchmark['pklpath'] == self.pklpath, "Wrong .pkl path"
+        assert benchmark['root'] == self.root, "Wrong dataset root, %s v.s. %s" % (
+            benchmark['root'], self.root)
+        assert benchmark['num_kp'] == self.num_kp, "Wrong number of keypoints, %d v.s. %d" % (
+            benchmark['num_kp'], self.num_kp)
+        assert benchmark['unit'] == self.unit, "Wrong unit, %f v.s. %f" % (
+            benchmark['unit'], self.unit)
+        assert benchmark['pklpath'] == self.pklpath, "Wrong .pkl path, %s v.s. %s" % (
+            benchmark['pklpath'], self.pklpath)
         self.__dict__ = benchmark
 
     def _save_to_disk(self):

@@ -4,7 +4,7 @@
 # Written by: Gao PENG (ecr23pg@gmail.com)
 # ------------------------------------------------------------------------------
 
-from sixd import SixdBenchmark
+from sixd import SixdToolkit
 from transform import *
 from utils import *
 import os
@@ -26,8 +26,7 @@ def parse_arg():
                         type=str, help="Path to save images and annotation")
     parser.add_argument('--num', default=50000, type=int,
                         help="Number of synthetic images")
-    parser.add_argument('--kp', default=17, type=int,
-                        help="Number of keypoints")
+    parser.add_argument('--kp', type=int, help="Number of keypoints")
     return parser.parse_args()
 
 
@@ -36,7 +35,7 @@ def get_frames(bench, num=(8, 15)):
     Randomly choose frames to render.
 
     Args
-    - bench: (SixdBenchmark)
+    - bench: (SixdToolkit)
     - num: (tuple) Number range of selected frames
 
     Returns
@@ -149,8 +148,8 @@ if __name__ == '__main__':
     print("[LOG] Number of keypoint: %d" % args.kp)
     print("[LOG] Number of images to generate: %d" % args.num)
 
-    bench = SixdBenchmark(dataset=args.dataset, num_kp=args.kp,
-                          unit=1e-3, is_train=True)
+    bench = SixdToolkit(dataset=args.dataset, num_kp=args.kp,
+                        unit=1e-3, is_train=True)
     bgpaths = [opj(args.bgroot, bgname)
                for bgname in os.listdir(args.bgroot)[:args.num]]
     np.random.shuffle(bgpaths)
@@ -177,6 +176,4 @@ if __name__ == '__main__':
         except Exception as e:
             print("\n[ERROR] %s in No.%d" % (str(e), idx))
 
-    print("[LOG] Number of synthetic images for different objects")
-    for k, v in count.items():
-        print("Sequence '%02d': %d" % (k, v))
+    print("Done!")
