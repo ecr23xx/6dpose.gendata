@@ -2,13 +2,13 @@
 
 Tools for generating synthetic 6DoF pose estimation training images. Now it only supports SIXD's hinterstoisser dataset.
 
-## Download
+## Download Dataset
 
 - [SIXD](http://cmp.felk.cvut.cz/sixd/challenge_2017/)
 
 ## Workflow
 
-1. Generate keypoints followed the instruction in [kps/README.md](kps/README.md)
+1. Generate keypoints followed the instructions in [kps/README.md](kps/README.md)
 2. Load rendered images from `$SIXDROOT/train/rgb`
 3. Load background images from `$COCOROOT`
 4. Stick rendered images into background with some data augumentation
