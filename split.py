@@ -7,7 +7,11 @@ from collections import defaultdict
 
 def parse_arg():
     parser = argparse.ArgumentParser(description='Synthetic data spliter')
-    parser.add_argument('--kp', type=int, help="Number of keypoints")
+    parser.add_argument('--root', default='/home/penggao/data/synthetic/hinterstoisser',
+                        type=str, help="Root to synthetic datasets")
+    parser.add_argument('--kpnum', type=int, help="Number of keypoints")
+    parser.add_argument('--kptype', choices=['sift', 'corner', 'random', 'cluster'],
+                        type=str, help="Type of keypoints")
     return parser.parse_args()
 
 
@@ -36,8 +40,11 @@ def split(root):
         with open(os.path.join(root, 'lists', 'split.txt'), 'a') as f:
             f.write('%s: %d\n' % (key, len(lines)))
 
+
 if __name__ == '__main__':
     args = parse_arg()
-    print("[LOG] Spliting datasets of %d keypoints" % args.kp)
-    split(os.path.join('/home/penggao/data/synthetic/hinterstoisser', str(args.kp)))
+    print("[LOG] Number of keypoints: %d" % args.kpnum)
+    print("[LOG] Type of keypoints: %s" % args.kptype)
+    print("[LOG] Spliting datasets")
+    split(os.path.join(args.root, str(args.kpnum), args.kptype))
     print("[LOG] Done!")

@@ -1,6 +1,6 @@
 # 6dpose.gendata
 
-Tools for generating synthetic 6DoF pose estimation training images. Now it only supports SIXD's hinterstoisser dataset. In the future, it will support SIXD's other datasets.
+Tools for generating synthetic 6DoF pose estimation training images. Now it only supports SIXD's hinterstoisser dataset.
 
 ## Download
 
@@ -18,6 +18,10 @@ Tools for generating synthetic 6DoF pose estimation training images. Now it only
     - pose
 
 ## Example
+
+Normal
+
+![](assets/normal.png)
 
 Gaussian blur
 

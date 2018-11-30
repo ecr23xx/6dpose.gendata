@@ -2,6 +2,8 @@
 
 ## How to Generate
 
+### SIFT Keypoints
+
 1. Install PCL libirary
 2. Modify parameters in `pcl-sift/main.cpp`
     ```cpp
@@ -19,13 +21,27 @@
     $ ./pcl-sift models/obj_01.ply /sifts/obj_01.ply 0.5
     ```
 
+### Other Keypoints
+
+Except for SIFT keypoints, we can also generate other kinds of keypoints:
+
+- **Corner keypoints**: 3d corners of the model
+- **Random keypoints**: Random surface points
+- **Cluster keypoints**: Uniformly clustered surface points
+
+Run following command to generate different kinds of keypoints
+
+```bash
+$ python kp.py --num=NUM --type=TYPE
+```
+
 ## Example
 
 ![kps.png](../assets/kps.png)
 
 ## Parameters
 
-Good keypoints should be distributed uniformly around the object mesh surface.
+Good SIFT keypoints should be distributed uniformly around the object mesh surface.
 
 | object | `min_scale` | `n_octaves` | `n_scales_per_octave` | `min_contrast` | # keypoints |
 | --- | --- | --- | --- | --- | --- |

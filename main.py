@@ -26,7 +26,9 @@ def parse_arg():
                         type=str, help="Path to save images and annotation")
     parser.add_argument('--num', default=50000, type=int,
                         help="Number of synthetic images")
-    parser.add_argument('--kp', type=int, help="Number of keypoints")
+    parser.add_argument('--kpnum', type=int, help="Number of keypoints")
+    parser.add_argument('--kptype', choices=['sift', 'corner', 'random', 'cluster'],
+                        type=str, help="Type of keypoints")
     return parser.parse_args()
 
 
@@ -145,24 +147,24 @@ def save(save_root, idx, img_array, annot):
 
 if __name__ == '__main__':
     args = parse_arg()
-    print("[LOG] Number of keypoint: %d" % args.kp)
+    print("[LOG] Number of keypoints: %d" % args.kpnum)
+    print("[LOG] Type of keypoints: %s" % args.kptype)
     print("[LOG] Number of images to generate: %d" % args.num)
 
-    bench = SixdToolkit(dataset=args.dataset, num_kp=args.kp,
-                        unit=1e-3, is_train=True)
+    bench = SixdToolkit(dataset=args.dataset, unit=1e-3, is_train=True,
+                        num_kp=args.kpnum, type_kp=args.kptype)
     bgpaths = [opj(args.bgroot, bgname)
                for bgname in os.listdir(args.bgroot)[:args.num]]
     np.random.shuffle(bgpaths)
 
     count = defaultdict(int)
-    os.makedirs(opj(args.saveroot, str(args.kp), 'images'), exist_ok=True)
-    os.makedirs(opj(args.saveroot, str(args.kp), 'annots'), exist_ok=True)
-    if len(os.listdir(opj(args.saveroot, str(args.kp), 'images'))) != 0:
+    KP_ROOT = opj(args.saveroot, str(args.kpnum), args.kptype)
+    os.makedirs(opj(KP_ROOT, 'images'), exist_ok=True)
+    os.makedirs(opj(KP_ROOT, 'annots'), exist_ok=True)
+    if len(os.listdir(opj(KP_ROOT, 'images'))) != 0:
         print("[WARNING] Clear exsiting images and annotations")
-        os.system('find %s/ -name "*.png" -delete' %
-                  opj(args.saveroot, str(args.kp), 'images'))
-        os.system('find %s/ -name "*.npy" -delete' %
-                  opj(args.saveroot, str(args.kp), 'annots'))
+        os.system('find %s/ -name "*.png" -delete' % opj(KP_ROOT, 'images'))
+        os.system('find %s/ -name "*.npy" -delete' % opj(KP_ROOT, 'annots'))
 
     print("[LOG] Sticking images")
     tbar = tqdm(bgpaths, ascii=True)
@@ -170,7 +172,7 @@ if __name__ == '__main__':
         frames = get_frames(bench)
         try:
             syn, annot = stick(frames, bg, bench.cam)
-            save(opj(args.saveroot, str(args.kp)), idx, syn, annot)
+            save(KP_ROOT, idx, syn, annot)
             for obj_id in annot['obj_ids']:
                 count[obj_id] += 1
         except Exception as e:

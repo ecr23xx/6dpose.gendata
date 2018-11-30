@@ -20,6 +20,8 @@ class SixdToolkit:
 
     Attrs
     - root: (str) Path to root. e.g. '/home/penggao/data/sixd/hinterstoisser'
+    - num_kp: (int) Number of keypoints. e.g. 17
+    - type_kp: (str) Type of keypoints. e.g. 'cluster'
     - unit: (float) Unit scale to meters. e.g. '1e-3' means unit is mm
     - pklpath: (str) Path to .pkl file
     - cam: (np.array) [3 x 3] camera matrix
@@ -30,10 +32,11 @@ class SixdToolkit:
           Each item is a list of image frames, with file paths and annotations
     """
 
-    def __init__(self, dataset, num_kp, unit, is_train, resume=True):
+    def __init__(self, dataset, num_kp, type_kp, unit, is_train, resume=True):
         # Prepare
         self.root = opj('/home/penggao/data/sixd', dataset)
         self.num_kp = num_kp
+        self.type_kp = type_kp
         self.unit = unit
         self.is_train = is_train
 
@@ -69,20 +72,22 @@ class SixdToolkit:
 
         # Load models and keypoints
         print("[LOG] Load models and keypoints")
-        with open(os.path.join(self.root, 'models/models_info.yml')) as f:
+        MODEL_ROOT = os.path.join(self.root, 'models')
+        KP_ROOT = os.path.join(
+            self.root, 'kps', str(self.num_kp), self.type_kp)
+        with open(os.path.join(MODEL_ROOT, 'models_info.yml')) as f:
             content = yaml.load(f)
             for key, val in tqdm(content.items(), ascii=True):
                 name = '%02d' % int(key)  # e.g. '01'
                 self.models_info[name] = val
 
-                ply_path = os.path.join(self.root, 'models/obj_%s.ply' % name)
+                ply_path = os.path.join(MODEL_ROOT, 'obj_%s.ply' % name)
                 data = PlyData.read(ply_path)
                 self.models[name] = np.stack((np.array(data['vertex']['x']),
                                               np.array(data['vertex']['y']),
                                               np.array(data['vertex']['z'])), axis=1)
 
-                kp_path = os.path.join(
-                    self.root, 'kps/%d/obj_%s.ply' % (self.num_kp, name))
+                kp_path = os.path.join(KP_ROOT, 'obj_%s.ply' % name)
                 data = PlyData.read(kp_path)
                 self.kps[name] = np.stack((np.array(data['vertex']['x']),
                                            np.array(data['vertex']['y']),
@@ -138,7 +143,7 @@ class SixdToolkit:
         """
         vertices = np.concatenate(
             (vertices, np.ones((vertices.shape[0], 1))), axis=1)
-        projected = np.matmul(np.matmul(cam, pose), vertices.T)
+        projected = np.matmul(np.matmul(self.cam, pose), vertices.T)
         projected /= projected[2, :]
         projected = projected[:2, :].T
         return projected
@@ -189,7 +194,7 @@ class SixdToolkit:
             model_points,
             image_points,
             self.cam,
-            np.zeros((4,1)), # Assuming no lens distortion
+            np.zeros((4, 1)),  # Assuming no lens distortion
             flags=cv2.SOLVEPNP_ITERATIVE
         )
         R = np.eye(3)
@@ -206,6 +211,8 @@ class SixdToolkit:
             benchmark['root'], self.root)
         assert benchmark['num_kp'] == self.num_kp, "Wrong number of keypoints, %d v.s. %d" % (
             benchmark['num_kp'], self.num_kp)
+        assert benchmark['type_kp'] == self.type_kp, "Wrong type of keypoints, %s v.s. %s" % (
+            benchmark['type_kp'], self.type_kp)
         assert benchmark['unit'] == self.unit, "Wrong unit, %f v.s. %f" % (
             benchmark['unit'], self.unit)
         assert benchmark['pklpath'] == self.pklpath, "Wrong .pkl path, %s v.s. %s" % (
