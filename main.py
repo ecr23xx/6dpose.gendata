@@ -8,6 +8,7 @@ from sixd import SixdToolkit
 from transform import *
 from utils import *
 import os
+import sys
 import argparse
 import numpy as np
 from tqdm import tqdm
@@ -162,12 +163,14 @@ if __name__ == '__main__':
     os.makedirs(opj(KP_ROOT, 'images'), exist_ok=True)
     os.makedirs(opj(KP_ROOT, 'annots'), exist_ok=True)
     if len(os.listdir(opj(KP_ROOT, 'images'))) != 0:
-        print("[WARNING] Clear exsiting images and annotations")
-        os.system('find %s/ -name "*.png" -delete' % opj(KP_ROOT, 'images'))
-        os.system('find %s/ -name "*.npy" -delete' % opj(KP_ROOT, 'annots'))
+        print("[WARNING] Overwriting exsiting datasets, proceed (y/[n])?", end=' ')
+        choice = input()
+        if choice != 'y':
+            print("[LOG] Interuppted by user, exit")
+            sys.exit()
 
     print("[LOG] Sticking images")
-    tbar = tqdm(bgpaths, ascii=True)
+    tbar = tqdm(bgpaths)
     for idx, bg in enumerate(tbar):
         frames = get_frames(bench)
         try:

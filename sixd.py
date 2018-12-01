@@ -77,7 +77,7 @@ class SixdToolkit:
             self.root, 'kps', str(self.num_kp), self.type_kp)
         with open(os.path.join(MODEL_ROOT, 'models_info.yml')) as f:
             content = yaml.load(f)
-            for key, val in tqdm(content.items(), ascii=True):
+            for key, val in tqdm(content.items()):
                 name = '%02d' % int(key)  # e.g. '01'
                 self.models_info[name] = val
 
@@ -95,7 +95,7 @@ class SixdToolkit:
 
         # Load annotations
         print("[LOG] Load annotations")
-        for seq in tqdm(['%02d' % i for i in range(1, self.seq_num+1)], ascii=True):
+        for seq in tqdm(['%02d' % i for i in range(1, self.seq_num+1)]):
             frames = list()
             seq_root = opj(
                 self.root, 'train' if self.is_train else 'test', str(seq))

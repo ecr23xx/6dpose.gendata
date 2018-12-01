@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import numpy as np
 from tqdm import tqdm
@@ -18,7 +19,7 @@ def parse_arg():
 def split(root):
     """Split the datasets for different sequences"""
     train_lists = defaultdict(list)
-    tbar = tqdm(sorted(os.listdir(os.path.join(root, 'annots'))), ascii=True)
+    tbar = tqdm(sorted(os.listdir(os.path.join(root, 'annots'))))
     for name in tbar:
         annot = np.load(os.path.join(root, 'annots', name)).item()
         flag = defaultdict(bool)
@@ -29,8 +30,13 @@ def split(root):
             flag['%02d' % obj_id] = True
 
     if os.path.exists(os.path.join(root, 'lists')):
-        print("[WARNING] Overwriting existing spliting file")
-        os.system('rm %s/*' % os.path.join(root, 'lists'))
+        print("[WARNING] Overwriting existing spliting file, proceed (y/[n])?", end=' ')
+        choice = input()
+        if choice != 'y':
+            print("[LOG] Interuppted by user, exit")
+            sys.exit()
+        else:
+            os.system('rm %s/*' % os.path.join(root, 'lists'))
     else:
         os.makedirs(os.path.join(root, 'lists'))
 
